@@ -1,5 +1,5 @@
-from Server.audio import OUTPUT_AUDIO_FILENAME, analyze_audio_features, extract_audio, transcribe_audio
-from Server.video import analyze_video_features
+from audio import OUTPUT_AUDIO_FILENAME, analyze_audio_features, extract_audio, transcribe_audio
+from video import analyze_video_features
 import os
 
 
