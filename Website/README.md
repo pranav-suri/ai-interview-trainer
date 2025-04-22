@@ -1,4 +1,4 @@
-# Welcome!
+# Welcome to your Lovable project
 
 ## Project info
 
@@ -6,9 +6,13 @@
 
 ## How can I edit this code?
 
-Simply visit: (https://lovable.dev/projects/ed0cac98-4813-4db9-ab8c-68142d183a49) and start prompting.
+There are several ways of editing your application.
 
-Changes will be committed automatically to this repo.
+**Use Lovable**
+
+Simply visit the [Lovable Project](https://lovable.dev/projects/ed0cac98-4813-4db9-ab8c-68142d183a49) and start prompting.
+
+Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
@@ -60,6 +64,9 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/ed0cac98-4813-4db9-ab8c-68142d183a49) and click on Share -> Publish.
 
+## Can I connect a custom domain to my Lovable project?
+
+Yes it is!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 

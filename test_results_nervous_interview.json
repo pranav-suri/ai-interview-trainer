@@ -1,0 +1,30 @@
+{
+  "audio_metrics": {
+    "avg_pause_duration_s": 0,
+    "avg_pitch_hz": 96.6124966389549,
+    "avg_volume_rms": 0.048159483820199966,
+    "filler_count": 0,
+    "num_pauses": 0,
+    "pace_wpm": 82,
+    "std_pitch_hz": 14.395560301373827,
+    "std_volume_rms": 0.04201605170965195
+  },
+  "gemini_error": "Error analyzing video: module 'google.genai' has no attribute 'GenerativeModel'",
+  "interview_question": "What is your greatest weakness?",
+  "status": "complete",
+  "transcript": "My name is Priyant Chibhargav and I've done my BTEC in computer science and... What do you mean by that? I've worked on several projects.",
+  "video_file": "nervous_interview.mp4",
+  "video_metrics": {
+    "dominant_emotion": "fearful",
+    "emotion_distribution": {
+      "angry": 19,
+      "disgusted": 4,
+      "fearful": 139,
+      "happy": 75,
+      "neutral": 0,
+      "sad": 1,
+      "surprised": 34
+    },
+    "upright_posture_percentage": 100.0
+  }
+}
