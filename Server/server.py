@@ -3,6 +3,8 @@ import os
 import json
 from typing import Dict, List, Union, Optional, Any, Tuple
 from werkzeug.utils import secure_filename
+import tempfile
+import subprocess
 
 from gemini import GEMINI_API_KEY, analyze_video_with_gemini
 from audio import (
@@ -17,7 +19,7 @@ app: Flask = Flask(__name__)
 
 # Configuration
 UPLOAD_FOLDER: str = "uploads"
-ALLOWED_EXTENSIONS: set = {"mp4", "avi", "mov", "wmv", "mkv"}
+ALLOWED_EXTENSIONS: set = {"mp4", "avi", "mov", "wmv", "mkv", "webm", "webp"}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max-limit
 
@@ -28,6 +30,65 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename: str) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def convert_webm_to_mp4(webm_path: str) -> Optional[str]:
+    """
+    Convert a .webm video file to .mp4 format using ffmpeg.
+
+    Args:
+        webm_path: Path to the .webm file
+
+    Returns:
+        Path to the converted .mp4 file or None if conversion failed
+    """
+    try:
+        # Create a temporary file for the output
+        mp4_fd, mp4_path = tempfile.mkstemp(
+            suffix=".mp4", dir=app.config["UPLOAD_FOLDER"]
+        )
+        os.close(mp4_fd)  # Close the file descriptor as we'll use the path
+
+        # Build the ffmpeg command
+        cmd = [
+            "ffmpeg",
+            "-i",
+            webm_path,  # Input file
+            "-c:v",
+            "libx264",  # Video codec
+            "-preset",
+            "medium",  # Encoding speed/compression trade-off
+            "-c:a",
+            "aac",  # Audio codec
+            "-strict",
+            "experimental",
+            "-b:a",
+            "128k",  # Audio bitrate
+            "-y",  # Overwrite output files without asking
+            mp4_path,  # Output file
+        ]
+
+        # Execute the ffmpeg command
+        print(f"Converting {webm_path} to MP4 format...")
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if os.path.exists(mp4_path) and os.path.getsize(mp4_path) > 0:
+            print(f"Conversion successful: {mp4_path}")
+            return mp4_path
+        else:
+            print("Conversion failed: Output file is empty or does not exist")
+            return None
+
+    except subprocess.CalledProcessError as e:
+        print(f"FFmpeg error: {e.stderr.decode() if e.stderr else str(e)}")
+        if os.path.exists(mp4_path):
+            os.unlink(mp4_path)
+        return None
+    except Exception as e:
+        print(f"Error during conversion: {str(e)}")
+        if "mp4_path" in locals() and os.path.exists(mp4_path):
+            os.unlink(mp4_path)
+        return None
 
 
 @app.route("/process", methods=["POST"])
@@ -66,6 +127,18 @@ def process_video_complete() -> Tuple[Any, int]:
         filename: str = secure_filename(file.filename)
         file_path: str = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(file_path)
+
+        # Convert .webm to .mp4 if necessary
+        original_file_path = file_path
+        if filename.lower().endswith(".webm"):
+            print(f"Detected .webm file: {filename}, converting to MP4 format...")
+            mp4_path = convert_webm_to_mp4(file_path)
+            if mp4_path:
+                file_path = mp4_path
+                filename = os.path.basename(mp4_path)
+                print(f"Using converted file for processing: {filename}")
+            else:
+                return jsonify({"error": "Failed to convert .webm file to .mp4"}), 500
 
         results: Dict[str, Any] = {
             "video_file": filename,
@@ -161,12 +234,24 @@ def process_video_complete() -> Tuple[Any, int]:
             else:
                 results["gemini_error"] = "Gemini API key not configured"
 
-            # 7. Clean up temporary audio file
+            # 7. Clean up temporary files
             if os.path.exists(OUTPUT_AUDIO_FILENAME):
                 try:
                     os.remove(OUTPUT_AUDIO_FILENAME)
                 except OSError:
                     pass  # Ignore deletion errors
+
+            # If we converted from webm, clean up the original webm file
+            if original_file_path != file_path and os.path.exists(original_file_path):
+                try:
+                    # Keep the converted mp4 file for future reference, but remove original webm
+                    # (you could also choose to remove both if disk space is a concern)
+                    os.remove(original_file_path)
+                    print(
+                        f"Removed original .webm file: {os.path.basename(original_file_path)}"
+                    )
+                except OSError as e:
+                    print(f"Warning: Could not remove original .webm file: {e}")
 
             results["status"] = "complete"
             return jsonify(results), 200
@@ -176,6 +261,13 @@ def process_video_complete() -> Tuple[Any, int]:
             if os.path.exists(OUTPUT_AUDIO_FILENAME):
                 try:
                     os.remove(OUTPUT_AUDIO_FILENAME)
+                except OSError:
+                    pass
+
+            # Clean up converted mp4 if it exists and is different from the original file
+            if original_file_path != file_path and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
                 except OSError:
                     pass
 
