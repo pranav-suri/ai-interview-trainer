@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react'; // Import useCallback
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebcamFeed from '@/components/interview/WebcamFeed';
@@ -64,8 +63,6 @@ const Practice = () => {
     'Describe a time when you had to overcome a significant challenge at work.'
   );
 
-  console.log("Rendering Practice component...");
-
   // UI state: clear all when starting new
   const handleStart = () => {
     setIsRecording(true);
@@ -80,17 +77,30 @@ const Practice = () => {
 
   const handleStop = () => {
     setIsRecording(false);
+    // Note: The actual processing starts when the WebcamFeed calls onRecordingReady
+    // This toast might be slightly premature if there's a delay in the stop event.
     toast({
       title: "Recording stopped",
       description: "Processing your video response.",
     });
   };
 
-  // Main video processing & API fetch logic
-  const handleRecordingReady = async (videoBlob: Blob) => {
+  // Main video processing & API fetch logic - WRAPPED IN useCallback
+  const handleRecordingReady = useCallback(async (videoBlob: Blob) => {
+    // Check if we are already processing to prevent potential double triggers
+    // although useCallback should primarily fix this.
+    // Also check if we intended to stop recording.
+    // console.log("isProcessing:", isProcessing, "isRecording:", isRecording);
+    // if (isProcessing || isRecording) {
+    //   console.warn('Already processing or recording in progress. Ignoring new recording.');
+    //   return
+    // };
+
     setRecordedVideo(videoBlob);
     setIsProcessing(true);
-    setUsedSample(false);
+    setUsedSample(false); // Reset sample flag
+    setApiResults(null); // Clear previous results before fetching new ones
+
     try {
       toast({
         title: "Processing video",
@@ -103,7 +113,6 @@ const Practice = () => {
         description: "Your interview has been processed successfully.",
       });
     } catch (error) {
-      // On API error, display mock data, log error, and update UI
       console.error('Error processing video:', error);
       setApiResults(SAMPLE_API_RESULTS);
       setUsedSample(true);
@@ -115,45 +124,32 @@ const Practice = () => {
     } finally {
       setIsProcessing(false);
     }
-  };
+    // Dependencies for useCallback: Include everything from the outer scope that the function uses.
+    // State setters (like setIsProcessing) are guaranteed stable by React and technically don't need to be listed,
+    // but including them is safer and often required by ESLint rules.
+  }, [currentQuestion, toast, isProcessing, isRecording]); // Added dependencies
 
   // Prepare chart data (empty by default)
   const chartData = apiResults ? getChartData(apiResults) : [];
 
   // For radar chart (show distribution in categories)
   const radarData = [
-    {
-      category: 'Relevance',
-      Score: apiResults?.relevance_score ?? 0,
-      fullMark: 5
-    },
-    {
-      category: 'Clarity',
-      Score: apiResults?.clarity_score ?? 0,
-      fullMark: 5
-    },
-    {
-      category: 'Tone',
-      Score: apiResults?.tone_score ?? 0,
-      fullMark: 5
-    },
-    {
-      category: 'Vocabulary',
-      Score: apiResults?.vocabulary_score ?? 0,
-      fullMark: 5
-    },
-    {
-      category: 'STAR',
-      Score: apiResults?.star_format_score ?? 0,
-      fullMark: 5
-    }
+    { category: 'Relevance', Score: apiResults?.relevance_score ?? 0, fullMark: 5 },
+    { category: 'Clarity', Score: apiResults?.clarity_score ?? 0, fullMark: 5 },
+    { category: 'Tone', Score: apiResults?.tone_score ?? 0, fullMark: 5 },
+    { category: 'Vocabulary', Score: apiResults?.vocabulary_score ?? 0, fullMark: 5 },
+    { category: 'STAR', Score: apiResults?.star_format_score ?? 0, fullMark: 5 }
   ];
+
+  // Determine title based on whether sample data is used
+  const resultTitle = usedSample ? "Practice Interview (Sample Data)" : apiResults ? "Practice Interview (API Results)" : "Practice Interview";
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow container mx-auto px-4 py-8 max-w-2xl">
+        {/* Updated Title Logic */}
         <h1 className="text-3xl font-bold mb-6">
-          Practice Interview {(usedSample ? "(Sample Data)" : "(API Results)")}
+          {resultTitle}
         </h1>
         <Card className="mb-6">
           <CardHeader>
@@ -188,7 +184,8 @@ const Practice = () => {
             <p>Processing your interview video...</p>
           </div>
         )}
-        {apiResults && (
+        {/* Conditionally render results only when not processing and results exist */}
+        {!isProcessing && apiResults && (
           <div className="space-y-8">
             {/* Main scores as charts */}
             <Card>
@@ -196,6 +193,7 @@ const Practice = () => {
                 <CardTitle>Interview Scores Overview</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Rest of the chart/results rendering logic remains the same */}
                 <div className="w-full max-w-xl mx-auto">
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={chartData}>
@@ -212,14 +210,13 @@ const Practice = () => {
                     <RadarChart data={radarData}>
                       <PolarGrid />
                       <PolarAngleAxis dataKey="category" />
-                      <PolarRadiusAxis angle={30} domain={[0, 5]} ticks={[{ coordinate: 1 },
-                          { coordinate: 2 }, { coordinate: 3 }, { coordinate: 4 }, { coordinate: 5 }]} tickCount={5} />
+                      <PolarRadiusAxis angle={30} domain={[0, 5]} tickCount={6} /> {/* Adjusted tickCount */}
                       <Radar name="Score" dataKey="Score" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.5} />
-                      <Legend />
+                      {/* <Legend /> Optionally add legend back */}
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 mt-8">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 mt-8">
                   {/* Progress Bars for each section */}
                   {chartData.map(d => (
                     <Card key={d.name} className="bg-gray-50 flex flex-col items-center">
@@ -276,4 +273,3 @@ const Practice = () => {
 };
 
 export default Practice;
-
