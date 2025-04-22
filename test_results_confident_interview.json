@@ -1,0 +1,30 @@
+{
+  "audio_metrics": {
+    "avg_pause_duration_s": 0,
+    "avg_pitch_hz": 103.13692304414731,
+    "avg_volume_rms": 0.04377371445298195,
+    "filler_count": 0,
+    "num_pauses": 0,
+    "pace_wpm": 141,
+    "std_pitch_hz": 18.258189527073117,
+    "std_volume_rms": 0.027856705710291862
+  },
+  "gemini_error": "Error analyzing video: module 'google.genai' has no attribute 'GenerativeModel'",
+  "interview_question": "Tell me about yourself",
+  "status": "complete",
+  "transcript": "Good evening, I am Priyad Ji Bharkiv and I am a computer science student at Symbhazis Institute of Technology and I am doing my PTEC and I have worked on many projects including the Moonstack projects and AI as well.",
+  "video_file": "confident_interview.mp4",
+  "video_metrics": {
+    "dominant_emotion": "happy",
+    "emotion_distribution": {
+      "angry": 14,
+      "disgusted": 5,
+      "fearful": 8,
+      "happy": 175,
+      "neutral": 15,
+      "sad": 0,
+      "surprised": 35
+    },
+    "upright_posture_percentage": 100.0
+  }
+}
