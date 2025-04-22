@@ -131,7 +131,6 @@ def process_video_complete() -> Tuple[Any, int]:
             # 6. Send to Gemini for analysis if API key is configured
             if GEMINI_API_KEY:
                 gemini_result: Dict[str, Any] = analyze_video_with_gemini(
-                    file_path,
                     interview_question,
                     transcript,
                     audio_metrics_str,

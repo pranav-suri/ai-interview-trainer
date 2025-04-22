@@ -12,11 +12,10 @@ if not GEMINI_API_KEY:
     print("Warning: GEMINI_API_KEY not set. Video analysis will not work.")
 
 # Initialize Gemini API
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 def analyze_video_with_gemini(
-    file_path: str,
     interview_question: str,
     transcript: str,
     audio_metrics_str: str,
@@ -27,14 +26,7 @@ def analyze_video_with_gemini(
         if not GEMINI_API_KEY:
             return {"error": "Gemini API key not configured"}
 
-        # Use the latest Gemini model
-        model = genai.GenerativeModel("gemini-pro-vision")
-
-        # Send video file for analysis - need to open in binary mode
-        with open(file_path, "rb") as f:
-            video_data: bytes = f.read()
-
-        prompt: str = """You are an expert AI Interview Coach. Your task is to analyze a candidate's response to an interview question based on the provided transcript and objective delivery metrics (audio/video analysis).
+        prompt: str = f"""You are an expert AI Interview Coach API. Your task is to analyze a candidate's response to an interview question based on the provided transcript and objective delivery metrics (audio/video analysis).
 
 **Interview Context:**
 *   **Question Asked:** "{interview_question}"
@@ -68,7 +60,6 @@ Provide your analysis *strictly* in JSON format. The JSON object should have the
 *   `areas_for_improvement`: (List of strings) 2-4 specific, actionable feedback points related to the scored criteria, referencing metrics or transcript parts where possible (e.g., "Improve STAR adhesion (Score: 2) by explicitly stating the Result.", "Reduce filler word count (count: Y) to enhance clarity (Score: 3).", "Work on varying vocal pitch (Std Dev: Z Hz) to improve tone perception (Score: 2).").
 
 **Example JSON Structure:**
-```json
 {{
   "relevance_score": 4,
   "clarity_score": 3,
@@ -86,15 +77,28 @@ Provide your analysis *strictly* in JSON format. The JSON object should have the
     "Consider increasing eye contact (estimated Z%) to further enhance engagement aspect of tone.",
     "Slightly high filler word count (count: Y) impacted clarity."
   ]
-}}"""
+}}
+Always respond in JSON format. Do not include any additional text or explanations outside of the JSON object.
+"""
 
         # Generate content with the updated API
-        response = model.generate_content(
-            [prompt, {"mime_type": "video/mp4", "data": video_data}]
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", contents=prompt
         )
 
-        return {"analysis": response.text, "timestamp": time.time()}
+        response_text = response.text
+        # Transform text to remove ```json and ``` markers
+        if response_text.startswith("```json"):
+            response_text = response_text[7:-3].strip()
+        elif response_text.startswith("```"):
+            response_text = response_text[3:-3].strip()
+
+        return {
+            "analysis": response_text,
+            "timestamp": time.time(),
+        }
     except Exception as e:
         if "GoogleAPIError" in str(type(e)):
             return {"error": f"Gemini API error: {str(e)}"}
         return {"error": f"Error analyzing video: {str(e)}"}
+
