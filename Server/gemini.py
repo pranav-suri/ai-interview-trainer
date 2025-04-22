@@ -11,7 +11,8 @@ GEMINI_API_KEY: str = os.environ.get(
 if not GEMINI_API_KEY:
     print("Warning: GEMINI_API_KEY not set. Video analysis will not work.")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
 
 
 def analyze_video_with_gemini(
@@ -26,7 +27,7 @@ def analyze_video_with_gemini(
         if not GEMINI_API_KEY:
             return {"error": "Gemini API key not configured"}
 
-        # For Gemini Pro Vision
+        # Use the latest Gemini model
         model = genai.GenerativeModel("gemini-pro-vision")
 
         # Send video file for analysis - need to open in binary mode
@@ -87,6 +88,7 @@ Provide your analysis *strictly* in JSON format. The JSON object should have the
   ]
 }}"""
 
+        # Generate content with the updated API
         response = model.generate_content(
             [prompt, {"mime_type": "video/mp4", "data": video_data}]
         )
