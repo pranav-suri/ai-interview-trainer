@@ -3,7 +3,6 @@
 .venv
 pip-selfcheck.json
 /share
-*.h5
 *.keras
 *.mp4
 *.wav
