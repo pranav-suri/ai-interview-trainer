@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react'; // Import useCallback
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import WebcamFeed from '@/components/interview/WebcamFeed';
-import { processInterviewVideo } from '@/utils/apiService';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
+import React, { useState, useCallback } from "react"; // Import useCallback
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WebcamFeed from "@/components/interview/WebcamFeed";
+import { processInterviewVideo } from "@/utils/apiService";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 import {
   ResponsiveContainer,
   BarChart,
@@ -19,8 +19,9 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Legend
-} from 'recharts';
+  Legend,
+} from "recharts";
+import { getRandomQuestion } from "@/utils/interviewQuestions";
 
 // Sample/mock data (use to display when API fails)
 const SAMPLE_API_RESULTS = {
@@ -30,24 +31,24 @@ const SAMPLE_API_RESULTS = {
   vocabulary_score: 5,
   star_format_score: 3,
   strengths: [
-    'Clear and confident voice',
-    'Maintained good eye contact',
-    'Used specific examples'
+    "Clear and confident voice",
+    "Maintained good eye contact",
+    "Used specific examples",
   ],
   areas_for_improvement: [
-    'Could be more concise',
-    'Expand on results achieved'
-  ]
+    "Could be more concise",
+    "Expand on results achieved",
+  ],
 };
 
 // Utility for transforming scores to chart-friendly format
 function getChartData(apiResults: any) {
   return [
-    { name: 'Relevance', value: apiResults.relevance_score ?? 0 },
-    { name: 'Clarity', value: apiResults.clarity_score ?? 0 },
-    { name: 'Tone', value: apiResults.tone_score ?? 0 },
-    { name: 'Vocabulary', value: apiResults.vocabulary_score ?? 0 },
-    { name: 'STAR', value: apiResults.star_format_score ?? 0 }
+    { name: "Relevance", value: apiResults.relevance_score ?? 0 },
+    { name: "Clarity", value: apiResults.clarity_score ?? 0 },
+    { name: "Tone", value: apiResults.tone_score ?? 0 },
+    { name: "Vocabulary", value: apiResults.vocabulary_score ?? 0 },
+    { name: "STAR", value: apiResults.star_format_score ?? 0 },
   ];
 }
 
@@ -60,7 +61,7 @@ const Practice = () => {
   const [apiResults, setApiResults] = useState<any>(null);
   const [usedSample, setUsedSample] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(
-    'Describe a time when you had to overcome a significant challenge at work.'
+    getRandomQuestion().question
   );
 
   // UI state: clear all when starting new
@@ -86,71 +87,93 @@ const Practice = () => {
   };
 
   // Main video processing & API fetch logic - WRAPPED IN useCallback
-  const handleRecordingReady = useCallback(async (videoBlob: Blob) => {
-    // Check if we are already processing to prevent potential double triggers
-    // although useCallback should primarily fix this.
-    // Also check if we intended to stop recording.
-    // console.log("isProcessing:", isProcessing, "isRecording:", isRecording);
-    // if (isProcessing || isRecording) {
-    //   console.warn('Already processing or recording in progress. Ignoring new recording.');
-    //   return
-    // };
+  const handleRecordingReady = useCallback(
+    async (videoBlob: Blob) => {
+      // Check if we are already processing to prevent potential double triggers
+      // although useCallback should primarily fix this.
+      // Also check if we intended to stop recording.
+      // console.log("isProcessing:", isProcessing, "isRecording:", isRecording);
+      // if (isProcessing || isRecording) {
+      //   console.warn('Already processing or recording in progress. Ignoring new recording.');
+      //   return
+      // };
 
-    setRecordedVideo(videoBlob);
-    setIsProcessing(true);
-    setUsedSample(false); // Reset sample flag
-    setApiResults(null); // Clear previous results before fetching new ones
+      setRecordedVideo(videoBlob);
+      setIsProcessing(true);
+      setUsedSample(false); // Reset sample flag
+      setApiResults(null); // Clear previous results before fetching new ones
 
-    try {
-      toast({
-        title: "Processing video",
-        description: "Sending your interview to be analyzed...",
-      });
-      const result = await processInterviewVideo(videoBlob, currentQuestion);
-      setApiResults(result);
-      toast({
-        title: "Analysis complete",
-        description: "Your interview has been processed successfully.",
-      });
-    } catch (error) {
-      console.error('Error processing video:', error);
-      setApiResults(SAMPLE_API_RESULTS);
-      setUsedSample(true);
-      toast({
-        title: "Processing error",
-        description: "Could not analyze video via API. Displaying example results instead.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-    // Dependencies for useCallback: Include everything from the outer scope that the function uses.
-    // State setters (like setIsProcessing) are guaranteed stable by React and technically don't need to be listed,
-    // but including them is safer and often required by ESLint rules.
-  }, [currentQuestion, toast, isProcessing, isRecording]); // Added dependencies
+      try {
+        toast({
+          title: "Processing video",
+          description: "Sending your interview to be analyzed...",
+        });
+        const result = await processInterviewVideo(videoBlob, currentQuestion);
+        setApiResults(result);
+        toast({
+          title: "Analysis complete",
+          description: "Your interview has been processed successfully.",
+        });
+      } catch (error) {
+        console.error("Error processing video:", error);
+        setApiResults(SAMPLE_API_RESULTS);
+        setUsedSample(true);
+        toast({
+          title: "Processing error",
+          description:
+            "Could not analyze video via API. Displaying example results instead.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+      // Dependencies for useCallback: Include everything from the outer scope that the function uses.
+      // State setters (like setIsProcessing) are guaranteed stable by React and technically don't need to be listed,
+      // but including them is safer and often required by ESLint rules.
+    },
+    [currentQuestion, toast, isProcessing, isRecording]
+  ); // Added dependencies
 
   // Prepare chart data (empty by default)
   const chartData = apiResults ? getChartData(apiResults) : [];
 
   // For radar chart (show distribution in categories)
   const radarData = [
-    { category: 'Relevance', Score: apiResults?.relevance_score ?? 0, fullMark: 5 },
-    { category: 'Clarity', Score: apiResults?.clarity_score ?? 0, fullMark: 5 },
-    { category: 'Tone', Score: apiResults?.tone_score ?? 0, fullMark: 5 },
-    { category: 'Vocabulary', Score: apiResults?.vocabulary_score ?? 0, fullMark: 5 },
-    { category: 'STAR', Score: apiResults?.star_format_score ?? 0, fullMark: 5 }
+    {
+      category: "Relevance",
+      Score: apiResults?.relevance_score ?? 0,
+      fullMark: 5,
+    },
+    {
+      category: "Clarity",
+      Score: apiResults?.clarity_score ?? 0,
+      fullMark: 5,
+    },
+    { category: "Tone", Score: apiResults?.tone_score ?? 0, fullMark: 5 },
+    {
+      category: "Vocabulary",
+      Score: apiResults?.vocabulary_score ?? 0,
+      fullMark: 5,
+    },
+    {
+      category: "STAR",
+      Score: apiResults?.star_format_score ?? 0,
+      fullMark: 5,
+    },
   ];
 
   // Determine title based on whether sample data is used
-  const resultTitle = usedSample ? "Practice Interview (Sample Data)" : apiResults ? "Practice Interview (API Results)" : "Practice Interview";
+  const resultTitle = usedSample
+    ? "Practice Interview (Sample Data)"
+    : apiResults
+    ? "Practice Interview (API Results)"
+    : "Practice Interview";
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow container mx-auto px-4 py-8 max-w-2xl">
         {/* Updated Title Logic */}
-        <h1 className="text-3xl font-bold mb-6">
-          {resultTitle}
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">{resultTitle}</h1>
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Interview Question</CardTitle>
@@ -171,10 +194,7 @@ const Practice = () => {
           >
             Start Recording
           </Button>
-          <Button
-            onClick={handleStop}
-            disabled={!isRecording || isProcessing}
-          >
+          <Button onClick={handleStop} disabled={!isRecording || isProcessing}>
             Stop Recording
           </Button>
         </div>
@@ -199,9 +219,14 @@ const Practice = () => {
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis domain={[0, 5]} ticks={[0,1,2,3,4,5]} />
+                      <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#0ea5e9" barSize={32} radius={[8, 8, 0, 0]} />
+                      <Bar
+                        dataKey="value"
+                        fill="#0ea5e9"
+                        barSize={32}
+                        radius={[8, 8, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -210,23 +235,45 @@ const Practice = () => {
                     <RadarChart data={radarData}>
                       <PolarGrid />
                       <PolarAngleAxis dataKey="category" />
-                      <PolarRadiusAxis angle={30} domain={[0, 5]} tickCount={6} /> {/* Adjusted tickCount */}
-                      <Radar name="Score" dataKey="Score" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.5} />
+                      <PolarRadiusAxis
+                        angle={30}
+                        domain={[0, 5]}
+                        tickCount={6}
+                      />{" "}
+                      {/* Adjusted tickCount */}
+                      <Radar
+                        name="Score"
+                        dataKey="Score"
+                        stroke="#0ea5e9"
+                        fill="#0ea5e9"
+                        fillOpacity={0.5}
+                      />
                       {/* <Legend /> Optionally add legend back */}
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 mt-8">
                   {/* Progress Bars for each section */}
-                  {chartData.map(d => (
-                    <Card key={d.name} className="bg-gray-50 flex flex-col items-center">
+                  {chartData.map((d) => (
+                    <Card
+                      key={d.name}
+                      className="bg-gray-50 flex flex-col items-center"
+                    >
                       <CardContent className="w-full pt-6">
-                        <h4 className="font-medium mb-2 text-center">{d.name}</h4>
+                        <h4 className="font-medium mb-2 text-center">
+                          {d.name}
+                        </h4>
                         <div className="flex items-center justify-center">
-                          <div className={`text-2xl font-bold
-                            ${d.value >= 4 ? 'text-green-600'
-                            : d.value >= 3 ? 'text-yellow-600'
-                            : 'text-red-500'}`}>
+                          <div
+                            className={`text-2xl font-bold
+                            ${
+                              d.value >= 4
+                                ? "text-green-600"
+                                : d.value >= 3
+                                ? "text-yellow-600"
+                                : "text-red-500"
+                            }`}
+                          >
                             {d.value}/5
                           </div>
                         </div>
@@ -243,11 +290,15 @@ const Practice = () => {
               </CardHeader>
               <CardContent>
                 <ul className="list-disc pl-6 space-y-1">
-                  {apiResults.strengths?.length
-                    ? apiResults.strengths.map((strength: string, idx: number) => (
+                  {apiResults.strengths?.length ? (
+                    apiResults.strengths.map(
+                      (strength: string, idx: number) => (
                         <li key={idx}>{strength}</li>
-                      ))
-                    : <li>No strengths detected.</li>}
+                      )
+                    )
+                  ) : (
+                    <li>No strengths detected.</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -257,11 +308,13 @@ const Practice = () => {
               </CardHeader>
               <CardContent>
                 <ul className="list-disc pl-6 space-y-1">
-                  {apiResults.areas_for_improvement?.length
-                    ? apiResults.areas_for_improvement.map((area: string, idx: number) => (
-                        <li key={idx}>{area}</li>
-                      ))
-                    : <li>No improvement areas detected.</li>}
+                  {apiResults.areas_for_improvement?.length ? (
+                    apiResults.areas_for_improvement.map(
+                      (area: string, idx: number) => <li key={idx}>{area}</li>
+                    )
+                  ) : (
+                    <li>No improvement areas detected.</li>
+                  )}
                 </ul>
               </CardContent>
             </Card>

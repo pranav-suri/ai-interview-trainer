@@ -9,7 +9,23 @@
     "std_pitch_hz": 14.395560301373827,
     "std_volume_rms": 0.04201605170965195
   },
-  "gemini_error": "Error analyzing video: module 'google.genai' has no attribute 'GenerativeModel'",
+  "gemini_analysis": {
+    "areas_for_improvement": [
+      "Address the question directly and avoid deflecting with another question. (Relevance Score: 1)",
+      "Improve clarity (Score: 1) by providing a direct and understandable response to the question instead of stating previous experience.",
+      "Tone (Score: 1) projects fearfulness (dominant emotion) and lacks confidence. Work on projecting confidence in future responses.",
+      "Vocabulary (Score: 2) could be improved by providing a more articulate and thoughtful response. Practice structuring weaknesses in a positive light.",
+      "Answer does not address the question of weakness at all making STAR format inapplicable (Score: 1)"
+    ],
+    "clarity_score": 1,
+    "relevance_score": 1,
+    "star_format_score": 1,
+    "strengths": [
+      "Upright posture maintained at 100%."
+    ],
+    "tone_score": 1,
+    "vocabulary_score": 2
+  },
   "interview_question": "What is your greatest weakness?",
   "status": "complete",
   "transcript": "My name is Priyant Chibhargav and I've done my BTEC in computer science and... What do you mean by that? I've worked on several projects.",

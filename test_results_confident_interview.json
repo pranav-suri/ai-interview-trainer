@@ -9,7 +9,23 @@
     "std_pitch_hz": 18.258189527073117,
     "std_volume_rms": 0.027856705710291862
   },
-  "gemini_error": "Error analyzing video: module 'google.genai' has no attribute 'GenerativeModel'",
+  "gemini_analysis": {
+    "areas_for_improvement": [
+      "Improve clarity (Score: 3) by being more specific. Instead of 'many projects,' name 2-3 specific projects.",
+      "Address the pacing of your speech; while 141 WPM is not inherently bad, focus on enunciation and pausing to ensure clarity.",
+      "Vocabulary (Score: 3) could be improved by expanding on 'Moonstack projects and AI.' Provide brief descriptions. Be more articulate.",
+      "Further professionalize the tone by expanding on the introduction, beyond name and education. What are your skills or areas of interest?"
+    ],
+    "clarity_score": 3,
+    "relevance_score": 4,
+    "star_format_score": 1,
+    "strengths": [
+      "Upright posture (100%) and happy dominant emotion suggest confidence and engagement (Tone Score: 4).",
+      "Answer is generally relevant, addressing the question and providing some background information (Relevance Score: 4)."
+    ],  
+    "tone_score": 4,
+    "vocabulary_score": 3
+  },
   "interview_question": "Tell me about yourself",
   "status": "complete",
   "transcript": "Good evening, I am Priyad Ji Bharkiv and I am a computer science student at Symbhazis Institute of Technology and I am doing my PTEC and I have worked on many projects including the Moonstack projects and AI as well.",

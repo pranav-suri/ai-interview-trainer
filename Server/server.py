@@ -158,6 +158,8 @@ def process_video_complete() -> Tuple[Any, int]:
 
             # 2. Transcribe Audio
             transcript: Optional[str] = transcribe_audio(OUTPUT_AUDIO_FILENAME)
+            print("Transcript:" + str(transcript))
+            
             if transcript is None:
                 # Clean up audio file before returning error
                 if os.path.exists(OUTPUT_AUDIO_FILENAME):
